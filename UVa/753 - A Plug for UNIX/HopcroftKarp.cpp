@@ -34,6 +34,26 @@ struct Bipartite{
         seen(N), edges(N, vInt()), d(N),
         couple(N, S), match(N), n(N), side(N) {}
 
+    int MaximumMatching(){
+        while(true){ 
+            ShortestPaths(); int m = 0;
+            for(int u = 0; u < n; u++){
+                if(!side[u]) continue;
+                if(match[u]) continue;
+                if(AugmentingPath(u) != S) ++m;
+                while(!path.empty())
+                    seen[path.front()] = false, 
+                    path.pop();
+            } if(!m) break;
+        } int m = 0;
+        for(int v = 0; v < n; v++){
+            if(side[v]) continue;
+            if(couple[v] != S) ++m,
+                match[v] = true;
+        }
+        return m;
+    }
+
     int AugmentingPath(int u){
         seen[u] = true, path.push(u);
         for(auto& v : edges[u])
@@ -71,26 +91,6 @@ struct Bipartite{
                     q.push(w);
             }
         }
-    }
-
-    int MaximumMatching(){
-        while(true){ 
-            ShortestPaths(); int m = 0;
-            for(int u = 0; u < n; u++){
-                if(!side[u]) continue;
-                if(match[u]) continue;
-                if(AugmentingPath(u) != S) ++m;
-                while(!path.empty())
-                    seen[path.front()] = false, 
-                    path.pop();
-            } if(!m) break;
-        } int m = 0;
-        for(int v = 0; v < n; v++){
-            if(side[v]) continue;
-            if(couple[v] != S) ++m,
-                match[v] = true;
-        }
-        return m;
     }
 
     void AddEdge(int u, int v){
