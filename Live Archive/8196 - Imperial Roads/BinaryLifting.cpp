@@ -146,29 +146,11 @@ struct Tree{
 
 struct Edge{
 
-    int u,v;
+    int u,v,w;
 
-    Edge(): u(), v() {}    
+    Edge(): u(), v(), w() {}    
 
-    Edge(int U, int V): u(U), v(V) {}
-
-    bool operator<(const Edge& other) const{
-        if(u == other.u)
-            return v < other.v;
-        else 
-            return u < other.u;
-    }
-
-};
-
-struct WeightedEdge : Edge{
-
-    int w;
-
-    WeightedEdge(): Edge(), w() {}
-
-    WeightedEdge(int U, int V, int W): 
-        Edge(U, V), w(W) {}
+    Edge(int U, int V, int W): u(U), v(V), w(W) {}
 
 };
 
@@ -176,8 +158,8 @@ int main(){
     std::ios_base::sync_with_stdio(0),
     cout.tie(0), cin.tie(0); int n,m;
     while(cin >> n >> m){ int c = 0;
-        vector<WeightedEdge> edges(m);
         vector<map<int, int>> w(n);
+        vector<Edge> edges(m);
         for(auto& e : edges)
             cin >> e.u >> e.v >> e.w,
             --e.v, c = max(c, e.w),
