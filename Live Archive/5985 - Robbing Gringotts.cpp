@@ -27,7 +27,7 @@ struct Bipartite{
     vector<bool> seen;
     vector<bool> side;
     queue<int> path;
-    int n,oo;
+    int n;
 
     Bipartite(int N): side(N), 
         n(N), couple(N, S), edges(N), seen(N) {} 
