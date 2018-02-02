@@ -6,8 +6,8 @@
 using std::unique_ptr;
 using std::vector;
 using std::queue;
-using std::swap;
 using std::cout;
+using std::swap;
 using std::cin;
 
 typedef vector<int> vInt;
@@ -83,8 +83,8 @@ struct Tree{
 
     Edge Meet(int u, int v){
         if(d[u] < d[v]) swap(u, v);
-        int s = PathLength(u, v);
-        int a = Lift(u, s >> 1);
+        auto s = PathLength(u, v);
+        auto a = Lift(u, s >> 1);
         if(!(s & 1)) return {a};
         return {a, p[a][0]};
     }
