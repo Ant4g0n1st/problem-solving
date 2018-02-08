@@ -55,12 +55,12 @@ struct Graph{
         for(; u < n; u++, z <<= 1){
             if(mask & z) continue;
             if(mask & closure[u]) continue;
-            if(Predecesors(u, mask)) break;
+            if(Predecessors(u, mask)) break;
         }
         order[m++] = u, TopoSort(mask | z);
     }
 
-    bool Predecesors(int u, Longest mask){
+    bool Predecessors(int u, Longest mask){
         return (mask & pred[u]) == pred[u];
     }
 
