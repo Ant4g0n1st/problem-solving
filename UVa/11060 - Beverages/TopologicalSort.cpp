@@ -96,7 +96,7 @@ int main(){
         cout << "Case #" << ++c << ": ",
         cout << "Dilbert should drink ",
         cout << "beverages in ",
-        cout <<  "this order:";
+        cout << "this order:";
         for(auto& u : g->GetOrder())
             cout << ' ' << name[u];
         cout << ".\n\n";
