@@ -17,7 +17,6 @@ using std::swap;
 using std::cin;
 
 typedef forward_list<int> List;
-typedef vector<int> vInt;
 
 const int oo = numeric_limits<int>::max();
 const int S = -1;
