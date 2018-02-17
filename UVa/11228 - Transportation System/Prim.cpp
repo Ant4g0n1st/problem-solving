@@ -131,12 +131,8 @@ int main(){
         cin >> n >> r;
         vector<Point> city(n);
         unique_ptr<Graph> g;
-        for(auto& p : city){
-            double x; 
-            cin >> x, p.x = x;
-            double y;
-            cin >> y, p.y = y;
-        }
+        for(auto& p : city)
+            cin >> p.x >> p.y;
         g.reset(new Graph(n));
         for(int u = 0; u < n; u++){
             auto& p = city[u];
