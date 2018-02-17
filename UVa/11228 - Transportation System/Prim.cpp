@@ -1,5 +1,4 @@
 #include <forward_list>
-#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <memory>
