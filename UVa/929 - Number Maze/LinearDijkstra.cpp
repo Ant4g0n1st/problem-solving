@@ -1,9 +1,13 @@
+#include <forward_list>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <vector>
 #include <queue>
 
 using std::numeric_limits;
+using std::forward_list;
+using std::unique_ptr;
 using std::ios_base;
 using std::vector;
 using std::queue;
@@ -11,21 +15,50 @@ using std::cout;
 using std::cin;
 using std::max;
 
-typedef vector<bool> vBool;
+typedef forward_list<int> List;
 typedef vector<int> vInt;
 
 const int oo = numeric_limits<int>::max();
 
-struct Node{
+struct Graph{
 
-    int r,c;
+    vector<List> edges;
+    vector<bool> seen;
+    vector<int> w;
+    vector<int> d;
+    int m,n;
 
-    Node(): r(), c() {}
+    Graph(int N): d(N, oo), 
+        edges(N), m(-oo), n(N), seen(N), w(N) {}
 
-    Node(int R, int C): r(R), c(C) {}
+    int ShortestPath(int s, int t){
+        vector<queue<int>> q(++m);
+        int in = 1, k, p = w[s];
+        q[d[s] = w[s]].push(s);
+        while(in){ p %= m;
+            if(q[p++].empty()) continue;
+            auto u = q[--p].front();
+            q[p].pop(), --in;
+            if(seen[u]) continue;
+            if(u == t) break;
+            seen[u] = true;
+            for(auto& v : edges[u]){
+                if(seen[v]) continue;
+                if(d[u] + w[v] < d[v])
+                    k = (p + w[v]) % m,
+                    q[k].push(v), ++in,
+                    d[v] = d[u] + w[v];
+            }
+        }
+        return d[t];
+    }
 
-    bool operator==(const Node& other) const{
-        return c == other.c and r == other.r;
+    void SetWeight(int u, int weight){
+        m = max(m, w[u] = weight);
+    }
+
+    void AddEdge(int u, int v){
+        edges[u].push_front(v);
     }
 
 };
@@ -46,43 +79,33 @@ int main(){
     adj.emplace_back(0, +1);
     adj.emplace_back(-1, 0);
     adj.emplace_back(+1, 0);
+    unique_ptr<Graph> g;
     int z; cin >> z; 
     for(int y = 0; y < z; y++){
         int m,n,x; cin >> m >> n, x = 0;
-        vector<vInt> w(m, vInt(n));
-        for(auto& row : w)
-            for(auto& k : row) 
-                cin >> k, x = max(x, k);
-        vector<vBool> seen(m, vBool(n));
-        vector<vInt> d(m, vInt(n, oo));
-        vector<queue<Node>> q(++x);
-        int in = 1, k = w[0][0];
-        Node t(m - 1, n - 1);
-        q[w[0][0]].emplace(),
-        d[0][0] = w[0][0];
-        while(in){ k %= x;
-            if(q[k++].empty()) continue;
-            auto u = q[--k].front();
-            q[k].pop(), --in;
-            if(seen[u.r][u.c]) continue;
-            seen[u.r][u.c] = true;
-            if(u == t) break;
-            for(auto& p : adj){
-                int r = u.r + p.a;
-                if(t.r < r) continue;
-                if(r < 0) continue;
-                int c = u.c + p.b;
-                if(t.c < c) continue;
-                if(c < 0) continue;
-                int du = d[u.r][u.c];
-                if(du + w[r][c] < d[r][c]){
-                    int i = (k + w[r][c]) % x;
-                    q[i].emplace(r, c), ++in,
-                    d[r][c] = du + w[r][c];
-                }
+        vector<vInt> node(m, vInt(n));
+        g.reset(new Graph(m * n));
+        for(auto& row : node)
+            for(auto& k : row){ k = x++; 
+                int w; cin >> w;
+                g->SetWeight(k, w);
             }
-        }
-        cout << d[t.r][t.c] << '\n';
+        for(int a = 0; a < m; a++)
+            for(int b = 0; b < n; b++)
+                for(auto& p : adj){
+                    int r = a + p.a;
+                    if(m <= r) continue;
+                    if(r < 0) continue;
+                    int c = b + p.b;
+                    if(n <= c) continue;
+                    if(c < 0) continue;
+                    int u = node[a][b];
+                    int v = node[r][c];
+                    g->AddEdge(u, v);
+                }
+        int s = 0, t = node[--m][--n];
+        cout << g->ShortestPath(s, t),
+        cout << '\n';
     }
     return 0;
 }
