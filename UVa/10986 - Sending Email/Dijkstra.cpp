@@ -11,7 +11,6 @@ using std::ios_base;
 using std::vector;
 using std::cout;
 using std::cin;
-
 const int oo = numeric_limits<int>::max();
 
 struct Graph{
