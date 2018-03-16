@@ -74,12 +74,11 @@ struct Graph{
     }
 
     void MakeTour(int u, Iterator it){
-        auto& k = ptr[u];
+        auto& k = ptr[u]; Iterator t;
         for(; k < deg[u]; k++){
             auto& e = edges[u][k];
             if(e->Blocked()) continue;
-            e->Block(), e->r->Block();
-            Iterator t;
+            e->Block(), e->r->Block(),
             t = tour.insert(it, e->v),
             MakeTour(e->v, t);
         }
