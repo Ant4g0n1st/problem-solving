@@ -53,8 +53,7 @@ struct Graph{
 
     ~Graph(){
         for(int u = 0; u < n; u++)
-            for(auto& e : edges[u])
-                if(e) delete e;
+            for(auto& e : edges[u]) if(e) delete e;
     }
 
     bool IsConnected(int s = 0){
@@ -90,8 +89,8 @@ struct Graph{
     }
 
     void AddEdge(int u, int v){
-        auto uv = new Edge(v);
-        auto vu = new Edge(u);
+        Edge* uv = new Edge(v);
+        Edge* vu = new Edge(u);
         edges[u].push_back(uv),
         edges[v].push_back(vu),
         uv->SetReverse(vu),
