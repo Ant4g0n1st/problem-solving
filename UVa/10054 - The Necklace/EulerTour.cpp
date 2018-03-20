@@ -14,14 +14,6 @@ using std::list;
 using std::cin;
 using std::map;
 
-namespace Constants{
-
-    const int T = 2;
-
-};
-
-using namespace Constants;
-
 struct Graph{
 
     struct Edge{
