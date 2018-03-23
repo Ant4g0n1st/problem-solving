@@ -11,11 +11,11 @@ int main(){
     for(int y = 0; y < z; y++){
         int d; cin >> d, --d;
         int x; cin >> x;
-        int node = 1;
+        int n = 1;
         for(int k = 0; k < d; k++)
-            node <<= 1, node += !(x & 1),
+            n <<= 1, n += !(x & 1),
             x = (x + 1) >> 1;
-        cout << node << '\n';
+        cout << n << '\n';
     }
     return 0;
 }
