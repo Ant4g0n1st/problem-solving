@@ -98,12 +98,11 @@ int main(){
         cout << b.size() << ' ';
         cout << "critical ",
         cout << "links\n";
-        for(auto& bridge : b){
+        for(auto& bridge : b)
             cout << bridge.u,
             cout << " - ",
             cout << bridge.v,
             cout << '\n';
-        }
         cout << '\n';
     }
     return 0;
