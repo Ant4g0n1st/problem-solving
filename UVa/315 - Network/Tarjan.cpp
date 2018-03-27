@@ -26,7 +26,6 @@ using namespace Constants;
 struct Graph{
 
     typedef forward_list<int> List;
-
     vector<List> edges;
     vector<bool> cut;
     vector<int> m;
