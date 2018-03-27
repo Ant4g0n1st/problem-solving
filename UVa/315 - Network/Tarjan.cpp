@@ -29,8 +29,8 @@ struct Graph{
 
     vector<List> edges;
     vector<bool> cut;
-    vector<int> t;
     vector<int> m;
+    vector<int> t;
     int k,n;
 
     Graph(int N): edges(N), n(N) {}
