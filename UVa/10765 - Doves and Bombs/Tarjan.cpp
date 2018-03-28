@@ -82,10 +82,8 @@ struct Graph{
         used.resize(++m), p = S,
         stack.resize(m), k = 0;
         vector<int> pigeon(n);
-        for(int u = 0; u < n; u++){
+        for(int u = 0; u < n; u++)
             if(!t[u]) Tarjan(u);
-            AddComponent();
-        }
         vector<bool> seen(n);
         for(auto& comp : bi){
             for(auto& u : comp)
