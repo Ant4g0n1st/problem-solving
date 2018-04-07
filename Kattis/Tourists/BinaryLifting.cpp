@@ -40,7 +40,7 @@ struct Tree{
     }
 
     int Weight(int u, int v){
-        return w[u] + w[v] - 2 * w[LCA(u, v)];
+        return w[u] + w[v] - 2 * w[LCA(u, v)] + 1;
     }
 
     void BinaryLifting(int s = 0){
@@ -105,8 +105,7 @@ int main(){
         Long sum = 0;
         for(int u = 1; u <= n; u++)
             for(int v = u << 1; v <= n; v += u)
-                sum += t->Weight(--u, --v),
-                ++sum, ++u, ++v;
+                sum += t->Weight(u - 1, v - 1);
         cout << sum << '\n';
     }
     return 0;
