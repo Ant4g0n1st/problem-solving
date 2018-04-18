@@ -31,6 +31,12 @@ struct Tree{
 
     Tree(int N): deg(N), edges(N), n(N) {}
 
+    int MaxLeft(int k, int root = 0){
+        s.resize(n), ++deg[root],
+        this->k = k, Size(root);
+        return s[root];
+    }
+
     int Size(int u, int p = S){
         if(--deg[u] < k) 
             return ++s[u];
@@ -44,12 +50,6 @@ struct Tree{
             if(deg[u]-- > k)
                 s[u] -= size;
         return ++s[u];
-    }
-
-    int MaxLeft(int k, int root = 0){
-        s.resize(n), ++deg[root],
-        this->k = k, Size(root);
-        return s[root];
     }
 
     void AddEdge(int u, int v){
