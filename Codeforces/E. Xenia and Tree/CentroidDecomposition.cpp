@@ -27,7 +27,6 @@ using namespace Constants;
 struct Tree{
     
     typedef forward_list<int> fInt;
-    typedef vector<int> vInt;
 
     struct Pair{
 
