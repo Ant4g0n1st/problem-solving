@@ -136,7 +136,7 @@ int main(){
             while(b <= e){
                 int h = (b + e) >> 1;
                 int z = ps[h];
-                if(z + p + 1> max)
+                if(z + p + 1 > max)
                     e = h - 1, k = h;
                 else
                     b = h + 1;
