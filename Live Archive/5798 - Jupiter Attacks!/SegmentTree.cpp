@@ -1,13 +1,15 @@
 #include <iostream>
+#include <memory>
 #include <vector>
 
+using std::unique_ptr;
 using std::vector;
 using std::cout;
 using std::cin;
 
 typedef long long int Long;
 
-namespace Math{
+namespace ModMath{
 
     static Long m;
 
@@ -50,9 +52,41 @@ namespace Math{
 
 };
 
-using Math::Multiply;
-using Math::Subtract;
-using Math::Add;
+using namespace ModMath;
+
+struct SegTree{
+
+    SegTree *left,*right;
+    int l,r;
+    Long v;
+
+    SegTree(int L, int R): l(L), r(R), v() {}
+
+    Long Query(int a, int b){
+        if(b < l or r < a) return Long(); 
+        if(l <= a and b <= r) return v;
+        return Add(left->Query(a, b),
+                right->Query(a, b));
+    }
+
+    Long Update(int x, int u){
+        if(x < l or r < x) return v; 
+        if(l <= x and x <= r)
+            return v = u;
+        return Add(left->Update(x, u),
+                right->Update(x, u));
+    }
+
+    Long Build(){
+        if(l == r) return v = Long();
+        int h = (l + r) >> 1;
+        left = new SegTree(l, h++),
+        right = new SegTree(h, r);
+        return left->Build()
+            + right->Build();
+    }
+
+};
 
 int main(){
     std::ios_base::sync_with_stdio(0),
@@ -60,12 +94,14 @@ int main(){
     Long b,n,p,q;
     while(cin >> b >> p >> n >> q){
         if(!b and !p and !n and !q) break;
+        unique_ptr<SegTree> st;
         vector<Long> pow(n);
+        ModMath::SetMod(p);
         pow.front() = 1LL;
-        Math::SetMod(p);
         for(int k = 1; k < n; k++){
             pow[k] = Multiply(pow[k - 1], b);
         }
+        st.reset(new SegTree(1, n));
     }
     return 0;
 }
