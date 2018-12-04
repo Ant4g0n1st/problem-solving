@@ -1,8 +1,10 @@
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <vector>
 
 using std::unique_ptr;
+using std::function;
 using std::vector;
 using std::cout;
 using std::cin;
@@ -21,20 +23,21 @@ namespace Math{
 
         ModLong(): k() {}
 
-        void ModInverse(Long a, Long b, ModLong& x, ModLong& y){
-            if(b == 0){
-                x = ModLong(1LL), y = ModLong();
-                return;
-            }
-            ModInverse(b, a % b, x, y);
-            auto z = ModLong(a / b);
-            z = x - y * z,
-            x = y, y = z;
-        }
-
         ModLong ModInverse(){
+            function<void(Long, Long)> bezout;
             ModLong x,y;
-            ModInverse(k, m, x, y);
+            bezout = [&] (Long a, Long b){
+                if(b == 0){
+                    x = ModLong(1LL), 
+                    y = ModLong();
+                    return;
+                }
+                auto z = ModLong(a / b);
+                bezout(b, a % b);
+                z = x - y * z,
+                x = y, y = z;
+            };
+            bezout(k, m);
             return x;
         }
     
