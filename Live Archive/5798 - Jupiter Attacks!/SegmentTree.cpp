@@ -7,101 +7,143 @@ using std::vector;
 using std::cout;
 using std::cin;
 
-typedef long long int Long;
+namespace Math{
 
-namespace ModMath{
+    typedef long long int Long;
 
-    static Long m;
+    struct ModLong{
 
-    Long Multiply(Long a, Long b){
-        return ((a % m) * (b % m)) % m;
-    } 
+        static Long m;
 
-    Long Add(Long a, Long b){
-        return ((a % m) + (b % m)) % m;
-    } 
+        Long k;
 
-    Long Subtract(Long a, Long b){
-        return Add(a, m - (b % m));
-    }
+        ModLong(Long K): k(K % m) {}
 
-    void Bezout(Long a, Long b, Long &x, Long &y){
-        if(b == 0){
-            x = 1LL, y = 0;
-            return;
+        ModLong(): k() {}
+
+        void ModInverse(Long a, Long b, ModLong& x, ModLong& y){
+            if(b == 0){
+                x = ModLong(1LL), y = ModLong();
+                return;
+            }
+            ModInverse(b, a % b, x, y);
+            auto z = ModLong(a / b);
+            z = x - y * z,
+            x = y, y = z;
         }
-        Bezout(b, a % b, x, y);
-        Long z = Multiply(a / b, y);
-        z = Subtract(x, z),
-        x = y, y = z;
-    }
 
-    Long ModInverse(Long a){
-        Long x,y;
-        Bezout(a, m, x, y);
-        return x;
-    }
+        ModLong ModInverse(){
+            ModLong x,y;
+            ModInverse(k, m, x, y);
+            return x;
+        }
     
-    Long Divide(Long a, Long b){
-        return Multiply(a, ModInverse(b));
-    }
+        ModLong operator-(const ModLong& other) const{
+            return (*this) + ModLong(m - other.k);
+        }
 
-    void SetMod(Long mod){
-        m = mod;
-    }
+        ModLong operator+(const ModLong& other) const{
+            return ModLong(k + other.k);
+        }
+
+        ModLong operator*(const ModLong& other) const{
+            return ModLong(k * other.k);
+        }
+
+        ModLong operator/(ModLong& other) const{
+            return (*this) * other.ModInverse();
+        }
+
+    };
+
+    Long ModLong::m = Long();
+
+};
+
+using namespace Math;
+
+namespace DataStructures{
+
+    template<class T>
+    struct SegTree{
+
+        SegTree *right;
+        SegTree *left;
+        int l,r;
+        T v;
+
+        SegTree(int L, int R): l(L), r(R), v(),
+            left(nullptr), right(nullptr) {}
+        
+        ~SegTree(){
+            if(right) delete right;
+            if(left) delete left;
+        }
+
+        T Update(int x, T u){
+            if(x < l or r < x) return v;
+            if(x <= l and r <= x)
+                return v = u;
+            return v = left->Update(x, u)
+                    + right->Update(x, u);
+        }
+
+        T Query(int a, int b){
+            if(b < l or r < a) return T();
+            if(a <= l and r <= b) 
+                return v;
+            return left->Query(a, b)
+                + right->Query(a, b);
+        }
+
+        T Build(){
+            if(l == r) return v = T();
+            int h = (l + r) >> 1;
+            left = new SegTree(l, h++),
+            right = new SegTree(h, r);
+            return left->Build()
+                + right->Build();
+        }
+
+    };
+
+    typedef SegTree<ModLong> ModTree;
 
 };
 
-using namespace ModMath;
-
-struct SegTree{
-
-    SegTree *left,*right;
-    int l,r;
-    Long v;
-
-    SegTree(int L, int R): l(L), r(R), v() {}
-
-    Long Query(int a, int b){
-        if(b < l or r < a) return Long(); 
-        if(l <= a and b <= r) return v;
-        return Add(left->Query(a, b),
-                right->Query(a, b));
-    }
-
-    Long Update(int x, int u){
-        if(x < l or r < x) return v; 
-        if(l <= x and x <= r)
-            return v = u;
-        return Add(left->Update(x, u),
-                right->Update(x, u));
-    }
-
-    Long Build(){
-        if(l == r) return v = Long();
-        int h = (l + r) >> 1;
-        left = new SegTree(l, h++),
-        right = new SegTree(h, r);
-        return left->Build()
-            + right->Build();
-    }
-
-};
+using namespace DataStructures;
 
 int main(){
     std::ios_base::sync_with_stdio(0),
-    cout.tie(0), cin.tie(0);
-    Long b,n,p,q;
-    while(cin >> b >> p >> n >> q){
-        if(!b and !p and !n and !q) break;
-        unique_ptr<SegTree> st;
-        vector<Long> pow(n);
-        ModMath::SetMod(p);
-        pow.front() = 1LL;
+    cout.tie(0), cin.tie(0); Long b,p;
+    while(cin >> b >> p){
+        int n,q; cin >> n >> q;
+        if(b + p + n + q == 0) 
+            break;
+        unique_ptr<ModTree> st;
+        ModLong::m = p;
+        vector<ModLong> pow(n);
+        pow.front().k = 1LL;
+        ModLong z(b);
         for(int k = 1; k < n; k++){
-            pow[k] = Multiply(pow[k - 1], b);
+            pow[k] = pow[k - 1] * z;
         }
-        st.reset(new SegTree(1, n));
+        st.reset(new ModTree(1, n));
+        st->Build();
+        for(int k = 0; k < q; k++){
+            char opt; cin >> opt;
+            if(opt == 'E'){
+                int x; Long u; 
+                cin >> x >> u;
+                st->Update(x, pow[n - x] * ModLong(u));
+            }else{
+                int l; cin >> l;
+                int r; cin >> r;
+                auto v = st->Query(l, r) / pow[n - r];
+                cout << v.k << '\n';
+            }
+        }
+        cout << "-\n";
     }
     return 0;
 }
