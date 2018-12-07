@@ -50,6 +50,83 @@ namespace Math{
 
 };
 
+using Math::Long;
+
+namespace DataStructures{
+
+    template<class T>
+    struct SegTree{
+
+        SegTree *right;
+        SegTree *left;
+        bool erase;
+        int l,r;
+        T v;
+
+        SegTree(int L, int R): erase(false), 
+            left(nullptr), right(nullptr),
+            l(L), r(R), v() {}
+
+        T Update(int x, T u){ 
+            LazyPropagation();
+            if(x < l or r < x) return v;
+            if(x <= l and r <= r)
+                return v = u + v;
+            return v = left->Update(x, u)
+                    + right->Update(x, u);
+        }
+
+        T Query(int u, int v){ 
+            LazyPropagation();
+            if(v < l or r < u) return T();
+            if(u <= l and r <= v) 
+                return v;
+            return left->Query(u, v)
+                + right->Query(u, v);
+
+        }
+
+        T Build(){
+            if(l == r) return v = T();
+            int h = (l + r) >> 1;
+            left = new SegTree(l, h++),
+            right = new SegTree(h, r);
+            return left->Build()
+                + right->Build();
+        }
+
+        void LazyPropagation(){
+            if(!erase) return;
+            if(right) right->Erase();
+            if(left) left->Erase();
+            erase = false, v = T();
+        }
+        
+        void Erase(){
+            erase = true;
+        }
+
+    };
+
+    struct Pair{
+    
+        Long v;
+        int p; 
+        
+        Pair(int P, Long V): p(P), v(V) {}
+        
+        Pair(): p(), v() {}
+
+        Pair operator+(const Pair& other) const{
+            return { p + other.p, v + other.v };
+        }
+
+    }; 
+
+    typedef SegTree<Pair> PairTree;
+
+};
+
 int main(){
     //std::ios_base::sync_with_stdio(0),
     //cout.tie(0), cin.tie(0);
