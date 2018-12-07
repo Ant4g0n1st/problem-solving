@@ -3,12 +3,15 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <queue>
 #include <array>
 
 using std::unique_ptr;
 using std::vector;
+using std::queue;
 using std::cout;
 using std::cin;
+using std::max;
 
 namespace Constants{
 
@@ -117,15 +120,14 @@ namespace DataStructures{
 
     struct Pair{
     
-        Long v;
-        int p; 
+        Long p,v;
         
-        Pair(int P, Long V): p(P), v(V) {}
+        Pair(Long V, Long P = 1LL): p(P), v(V) {}
         
         Pair(): p(), v() {}
 
         Pair operator+(const Pair& other) const{
-            return { p + other.p, v + other.v };
+            return { v + other.v, p + other.p };
         }
 
     }; 
@@ -147,14 +149,91 @@ namespace Graph{
         vector<int> parent;
         vector<int> size;
         vector<bool> cut;
-        vector<int> dc;
+        vector<Long> dc;
+        vector<int> wc;
+        vector<int> w;
         int n;
 
-        Tree(int N): edges(N), n(N) {
-            dp.reset(new PairTree(-n, n));
+        Tree(int N): edges(N), n(N), w(N) {}
+
+        Long Decompose(int z = int()){
+            queue<int> q; q.push(z);
+            int min = Subtree(z);
+            int c = z;
+            while(!q.empty()){
+                auto u = q.front(); q.pop();
+                auto s = size[z] - size[u];
+                for(auto& v : edges[u]){
+                    if(cut[v]) continue;
+                    if(v != parent[u]){
+                        s = max(s, size[v]),
+                        q.push(v);
+                    }
+                }
+                if(s < min){
+                    min = s,
+                    c = u;
+                }
+            }
+            dp->Update(w[c], { 1LL });
+            cut[c] = true;
+            Long sp = Long();
+            for(auto& v : edges[c]){
+               if(cut[v]) continue;
+                dc[c] = Long();
+                wc[c] = int();
+                wc[v] = wc[c] + w[v];
+                dc[v] = dc[c] + 1;
+                sp += Paths(v);
+                wc[c] = w[c];
+                dc[c] = 1;
+                wc[v] = wc[c] + w[v];
+                dc[v] = dc[c] + 1;
+                AddPaths(v);
+            }
+            dp->Erase();
+            for(auto& v : edges[c]){
+                if(!cut[v]) Decompose(v);
+            }
         }
 
-        Long BeautifulPaths(){}
+        void SetWeight(int u, int weight){
+            w[u] = weight;
+        }
+
+        Long InterestingPaths(){
+            dp.reset(new PairTree(-n, n)),
+            parent.resize(n), dp->Build(),
+            size.resize(n), dc.resize(n),
+            cut.resize(n), wc.resize(n);
+            return Decompose(); 
+        }
+
+        Long Paths(int u, int p = P){
+            Long sp = Long();
+            for(auto& v : edges[u]){
+                if(cut[v]) continue;
+                if(v == p) continue;
+                wc[v] = wc[u] + w[v];
+                sp += Paths(v, u);
+            }
+            int l = -wc[u];
+            if(++l <= n){
+                auto q = dp->Query(l, n);
+                sp += q.v + dc[u] * q.p;
+            }
+            return sp;
+        }
+
+        void AddPaths(int u, int p = P){
+            for(auto& v : edges[u]){
+                if(cut[v]) continue;
+                if(v == p) continue;
+                dc[v] = dc[u] + 1;
+                AddPaths(v, u);
+            }
+            dp->Update(wc[u], { dc[u] });
+        }
 
         int Subtree(int u, int p = P){
             parent[u] = p; int s = 0;
