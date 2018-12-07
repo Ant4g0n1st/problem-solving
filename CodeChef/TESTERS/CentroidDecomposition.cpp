@@ -5,6 +5,7 @@
 #include <vector>
 #include <array>
 
+using std::unique_ptr;
 using std::vector;
 using std::cout;
 using std::cin;
@@ -67,6 +68,11 @@ namespace DataStructures{
             left(nullptr), right(nullptr),
             l(L), r(R), v() {}
 
+        ~SegTree(){
+            if(right) delete right;
+            if(left) delete left;
+        }
+
         T Update(int x, T u){ 
             LazyPropagation();
             if(x < l or r < x) return v;
@@ -124,6 +130,35 @@ namespace DataStructures{
     }; 
 
     typedef SegTree<Pair> PairTree;
+
+};
+
+namespace Graph{
+
+    using DataStructures::PairTree;
+
+    typedef std::forward_list<int> List;
+
+    struct Tree{
+        
+        unique_ptr<PairTree> dp;
+        vector<List> edges;
+        vector<int> parent;
+        vector<int> size;
+        vector<bool> cut;
+        vector<int> dc;
+        int n;
+
+        Tree(int N): edges(N), n(N) {
+            dp.reset(new PairTree(-n, n));
+        }
+
+        void AddEdge(int u, int v){
+            edges[u].emplace_front(v),
+            edges[v].emplace_front(u);
+        }
+
+    };
 
 };
 
