@@ -14,6 +14,7 @@ namespace Constants{
 
     const int oo = std::numeric_limits<int>::max();
     const int S = 1e6 + 5e5 + 1;
+    const int P = -1;
 
 };
 
@@ -151,6 +152,18 @@ namespace Graph{
 
         Tree(int N): edges(N), n(N) {
             dp.reset(new PairTree(-n, n));
+        }
+
+        Long BeautifulPaths(){}
+
+        int Subtree(int u, int p = P){
+            parent[u] = p; int s = 0;
+            for(auto& v : edges[u]){
+                if(cut[v]) continue;
+                if(v == p) continue;
+                s += Subtree(v, u);
+            }
+            return size[u] = ++s; 
         }
 
         void AddEdge(int u, int v){
