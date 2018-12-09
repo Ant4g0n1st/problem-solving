@@ -7,6 +7,7 @@
 #include <array>
 
 using std::unique_ptr;
+using std::ios_base;
 using std::vector;
 using std::queue;
 using std::cout;
@@ -93,7 +94,6 @@ namespace DataStructures{
                 return v;
             return left->Query(a, b)
                 + right->Query(a, b);
-
         }
 
         T Build(){
@@ -178,12 +178,12 @@ namespace Graphs{
             Long sp = Long();
             cut[c] = true;
             for(auto& v : edges[c]){
-               if(cut[v]) continue;
+                if(cut[v]) continue;
                 wc[v] = w[v];
-                dc[v] = 1;
+                dc[v] = 1LL;
                 sp += Paths(v);
                 wc[c] = w[c];
-                dc[c] = 1;
+                dc[c] = 1LL;
                 wc[v] = wc[c] + w[v];
                 dc[v] = dc[c] + 1;
                 AddPaths(v);
@@ -212,11 +212,13 @@ namespace Graphs{
                 if(cut[v]) continue;
                 if(v == p) continue;
                 wc[v] = wc[u] + w[v];
-                dc[v] = dc[u] + 1;
+                dc[v] = dc[u] + 1LL;
                 sp += Paths(v, u);
             }
-            auto q = dp->Query(-wc[u], n);
-            sp += (q.v + dc[u] * q.p);
+            auto m = -wc[u]; 
+            auto q = dp->Query(m, n);
+            sp += dc[u] * q.p;
+            sp += q.v;
             return sp;
         }
 
@@ -228,7 +230,8 @@ namespace Graphs{
             for(auto& v : edges[u]){
                 if(cut[v]) continue;
                 if(v == p) continue;
-                dc[v] = dc[u] + 1;
+                wc[v] = wc[u] + w[v];
+                dc[v] = dc[u] + 1LL;
                 AddPaths(v, u);
             }
             dp->Update(wc[u], { dc[u] });
@@ -256,7 +259,7 @@ namespace Graphs{
 using Graphs::Tree;
 
 int main(){
-    std::ios_base::sync_with_stdio(0),
+    ios_base::sync_with_stdio(0),
     cout.tie(0), cin.tie(0);
     unique_ptr<Tree> t;
     Math::FillSieve();
@@ -275,7 +278,6 @@ int main(){
             t->SetWeight(u, -1);
         }
     }
-    cout << t->InterestingPaths(),
-    cout << '\n';
+    cout << t->InterestingPaths();
     return 0;
 }
