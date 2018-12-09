@@ -80,19 +80,19 @@ namespace DataStructures{
         T Update(int x, T u){ 
             LazyPropagation();
             if(x < l or r < x) return v;
-            if(x <= l and r <= r)
+            if(x <= l and r <= x)
                 return v = u + v;
             return v = left->Update(x, u)
                     + right->Update(x, u);
         }
 
-        T Query(int u, int v){ 
+        T Query(int a, int b){ 
             LazyPropagation();
-            if(v < l or r < u) return T();
-            if(u <= l and r <= v) 
+            if(b < l or r < a) return T();
+            if(a <= l and r <= b) 
                 return v;
-            return left->Query(u, v)
-                + right->Query(u, v);
+            return left->Query(a, b)
+                + right->Query(a, b);
 
         }
 
@@ -101,12 +101,12 @@ namespace DataStructures{
             int h = (l + r) >> 1;
             left = new SegTree(l, h++),
             right = new SegTree(h, r);
-            return left->Build()
-                + right->Build();
+            return v = left->Build()
+                    + right->Build();
         }
 
         void LazyPropagation(){
-            if(!erase) return;
+            if(erase == false) return;
             if(right) right->Erase();
             if(left) left->Erase();
             erase = false, v = T();
@@ -136,7 +136,7 @@ namespace DataStructures{
 
 };
 
-namespace Graph{
+namespace Graphs{
 
     using DataStructures::PairTree;
 
@@ -157,9 +157,8 @@ namespace Graph{
         Tree(int N): edges(N), n(N), w(N) {}
 
         Long Decompose(int z = int()){
+            int min = Subtree(z), c = z;
             queue<int> q; q.push(z);
-            int min = Subtree(z);
-            int c = z;
             while(!q.empty()){
                 auto u = q.front(); q.pop();
                 auto s = size[z] - size[u];
@@ -176,14 +175,12 @@ namespace Graph{
                 }
             }
             dp->Update(w[c], { 1LL });
-            cut[c] = true;
             Long sp = Long();
+            cut[c] = true;
             for(auto& v : edges[c]){
                if(cut[v]) continue;
-                dc[c] = Long();
-                wc[c] = int();
-                wc[v] = wc[c] + w[v];
-                dc[v] = dc[c] + 1;
+                wc[v] = w[v];
+                dc[v] = 1;
                 sp += Paths(v);
                 wc[c] = w[c];
                 dc[c] = 1;
@@ -193,12 +190,12 @@ namespace Graph{
             }
             dp->Erase();
             for(auto& v : edges[c]){
-                if(!cut[v]) Decompose(v);
+                if(!cut[v]){
+                    sp += Decompose(v);
+                }
             }
-        }
-
-        void SetWeight(int u, int weight){
-            w[u] = weight;
+            if(w[c] > 0) sp++;
+            return sp;
         }
 
         Long InterestingPaths(){
@@ -215,14 +212,16 @@ namespace Graph{
                 if(cut[v]) continue;
                 if(v == p) continue;
                 wc[v] = wc[u] + w[v];
+                dc[v] = dc[u] + 1;
                 sp += Paths(v, u);
             }
-            int l = -wc[u];
-            if(++l <= n){
-                auto q = dp->Query(l, n);
-                sp += q.v + dc[u] * q.p;
-            }
+            auto q = dp->Query(-wc[u], n);
+            sp += (q.v + dc[u] * q.p);
             return sp;
+        }
+
+        void SetWeight(int u, int weight){
+            w[u] = weight;
         }
 
         void AddPaths(int u, int p = P){
@@ -254,9 +253,29 @@ namespace Graph{
 
 };
 
+using Graphs::Tree;
+
 int main(){
-    //std::ios_base::sync_with_stdio(0),
-    //cout.tie(0), cin.tie(0);
+    std::ios_base::sync_with_stdio(0),
+    cout.tie(0), cin.tie(0);
+    unique_ptr<Tree> t;
     Math::FillSieve();
+    int n; cin >> n;
+    t.reset(new Tree(n));
+    for(int k = 1; k < n; k++){
+        int u; cin >> u, --u;
+        int v; cin >> v, --v;
+        t->AddEdge(u, v); 
+    }
+    for(int u = 0; u < n; u++){
+        int w; cin >> w;
+        if(Math::IsBeautiful(w)){
+            t->SetWeight(u, +1);
+        }else{
+            t->SetWeight(u, -1);
+        }
+    }
+    cout << t->InterestingPaths(),
+    cout << '\n';
     return 0;
 }
