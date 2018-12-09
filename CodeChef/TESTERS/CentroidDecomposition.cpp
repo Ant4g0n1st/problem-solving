@@ -1,6 +1,5 @@
 #include <forward_list>
 #include <iostream>
-#include <limits>
 #include <memory>
 #include <vector>
 #include <queue>
@@ -16,7 +15,6 @@ using std::max;
 
 namespace Constants{
 
-    const int oo = std::numeric_limits<int>::max();
     const int S = 1e6 + 5e5 + 1;
     const int P = -1;
 
