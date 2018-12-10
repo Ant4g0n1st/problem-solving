@@ -1,7 +1,6 @@
 #include <iostream>
 #include <queue>
 
-using std::priority_queue;
 using std::cout;
 using std::cin;
 
@@ -10,7 +9,7 @@ int main(){
     cout.tie(0), cin.tie(0); int n;
     while(cin >> n){
         if(n == 0) continue;
-        priority_queue<int> q;
+        std::priority_queue<int> q;
         for(int k = 0; k < n; k++){
             int v; cin >> v;
             q.push(-v);
