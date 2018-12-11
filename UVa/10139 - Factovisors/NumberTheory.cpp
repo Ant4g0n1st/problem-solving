@@ -36,7 +36,7 @@ namespace Math{
 
     bool Factovisors(Long u, Long v){
         if(u == 0) return false;
-        if(v == 0) return true;
+        if(v == 0) v = 1;
         for(const Long p : primes){
             Long x = 0, y = 0;
             while(u % p == 0){
@@ -51,7 +51,7 @@ namespace Math{
                 return false;
             if(u == 1) break;
         }
-        return true;
+        return u <= v;
     }
 
 };
