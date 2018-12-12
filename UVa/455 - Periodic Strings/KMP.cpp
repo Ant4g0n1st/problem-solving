@@ -8,14 +8,6 @@ using std::vector;
 using std::cout;
 using std::cin;
 
-namespace Constants{
-
-    const int Z = -1;
-
-};
-
-using namespace Constants;
-
 namespace Strings{
 
     int Period(const string& s){
