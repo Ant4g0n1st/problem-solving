@@ -3,7 +3,6 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
-#include <set>
 
 using std::ios_base;
 using std::vector;
@@ -16,9 +15,10 @@ namespace Constants{
 
     const double PI = std::acos(-1.0);
     const double E = 1e-9;
+    const double Z = 1e-3;
     const double S = 1e5;
     const double P = 9;
-    const int B = 35;
+    const int B = 28;
 
 };
 
@@ -59,7 +59,7 @@ int main(){
         if(n == 0){
             const auto w = S / double(s);
             for(int k = 0; k < s; k++){
-                cout << w << '\n';
+                cout << w * Z << '\n';
             }
             continue;
         }
@@ -95,7 +95,7 @@ int main(){
             lb = lb + x;
         }
         for(const auto& k : slices){
-            cout << k / 1e3 << '\n';
+            cout << k * Z << '\n';
         }
     }
     return 0;
