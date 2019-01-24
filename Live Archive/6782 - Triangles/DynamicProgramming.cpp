@@ -1,7 +1,9 @@
+#include <functional>
 #include <algorithm>
 #include <iostream>
 #include <vector>
 
+using std::function;
 using std::vector;
 using std::cout;
 using std::sort;
@@ -10,7 +12,6 @@ using std::max;
 
 namespace Constants{
 
-    const float Z = 1e3;
     const int L = 3;
 
 };
@@ -22,16 +23,16 @@ namespace DataStructures{
     struct Triangle{
         
         vector<int> sides;
-        int scale;
+        float scale;
 
         Triangle(): scale(), sides(L) {}
 
-        bool operator==(const Triangle& other) const{
-            return scale == other.scale;
-        }
-
         bool operator<(const Triangle& other) const{
             return scale < other.scale;
+        }
+        
+        int& operator[](int k){
+            return sides[k];
         }
 
     };
@@ -42,51 +43,34 @@ using DataStructures::Triangle;
 
 namespace DynamicProgramming{
 
-    int LongestChain(vector<Triangle>& v){
-        sort(v.begin(), v.end());
+    int LongestChain(vector<Triangle>& t){
+        sort(t.begin(), t.end());
+        function<int(int,int)> f;
         vector<vector<int>> dp;
-        const int n = v.size();
-        auto maxChain = 1;
-        dp.assign(n, vector<int>(L + 1, 1));
-        for(int l = n - 1; l >= 0; l--){
-            const auto& p = v[l];
+        const int n = t.size();
+        dp.assign(n, vector<int>(L + 1));
+        f = [&] (int l, int s){
+            if(dp[l][s]) return dp[l][s];
+            auto& v = dp[l][s] = 1;
             for(int r = l + 1; r < n; r++){
-                const auto& q = v[r];
-                if(p == q) continue;
+                if(!(t[l] < t[r])) continue;
                 for(int x = 0; x < L; x++){
-                    auto& a = dp[l][(x + 1) % L];
-                    auto& b = dp[l][(x + 2) % L];
+                    if(x == s) continue;
                     for(int y = 0; y < L; y++){
-                        if(p.sides[x] == q.sides[y]){
-                            a = max(a, dp[r][y] + 1);
-                            b = max(b, dp[r][y] + 1);
-                            dp[l][L] = max(dp[l][L], dp[r][y] + 1);
+                        if(t[l][x] != t[r][y]){
+                            continue;
                         }
+                        int u = f(r, y);
+                        v = max(v, ++u);
                     }
                 }
             }
-            for(int x = 0; x <= L; x++){
-                if(maxChain < dp[l][x]){
-                    maxChain = dp[l][x];
-                }
-            }
+            return v;
+        };
+        auto maxChain = int();
+        for(int k = 0; k < n; k++){
+            maxChain = max(maxChain, f(k, L));
         }
-/*
-        for(const auto& t : v){
-            for(const auto& s : t.sides){
-                cout << s << ' ';
-            }
-            cout << t.scale << std::endl;
-        }
-        cout << std::endl;
-        for(int l = 0; l < L; l++){
-            for(int r = 0; r < n; r++){
-                cout << dp[r][l] << ' '; 
-            }
-            cout << std::endl;
-        }
-        cout << std::endl;
-*/
         return maxChain;
     }
 
@@ -103,8 +87,7 @@ int main(){
             for(auto& side : t.sides){
                 cin >> side; 
             }
-            float s; cin >> s, s *= Z;
-            t.scale = int(s);
+            cin >> t.scale;
         }
         cout << LongestChain(triangles),
         cout << '\n';
