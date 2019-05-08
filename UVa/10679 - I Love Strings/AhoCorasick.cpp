@@ -23,6 +23,7 @@ namespace Strings{
         vector<List> trie;
         vector<int> fail;
         unsigned int n;
+        unsigned int m;
 
         AhoCorasick(const vector<string>& patterns){
             unsigned int size = int(); 
@@ -33,18 +34,9 @@ namespace Strings{
             trie.resize(size);
             out.resize(size);
             this->n = int();
-            auto m = int();
+            this->m = int();
             for(const auto& p : patterns){
-                unsigned int u = int();
-                for(const auto& c : p){
-                    auto f = trie[u].find(c);
-                    if(f == trie[u].end()){
-                        u = trie[u][c] = ++m;
-                    }else{
-                        u = f->second;
-                    }
-                }
-                out[u].insert(n++);
+                this->InsertString(p);
             }
             std::queue<int> q;
             for(auto& e : trie.front()){
@@ -53,32 +45,26 @@ namespace Strings{
             while(!q.empty()){
                 auto u = q.front(); q.pop();
                 for(auto& e : trie[u]){
-                    const auto& c = e.first;
-                    auto f = fail[u];
-                    while(!trie[f].count(c)){
-                        if(f == 0) break;
-                        f = fail[f];
-                    } 
-                    const auto& v = e.second;
-                    auto x = trie[f].find(c);
-                    if(x != trie[f].end()){
-                        f = x->second;
-                    }
-                    fail[v] = f;
+                    auto& v = e.second;
+                    auto& c = e.first;
+                    auto& f = fail[u];
+                    fail[v] = Failure(f, c);
+                    UpdateOutput(v);
                     q.push(v);
                 }
             }
-            for(int u = 0; u < m; u++){
-                auto& f = out[fail[u]];
-                out[u].insert(f.begin(), f.end());
-            }
+        }
+
+        void UpdateOutput(int u){
+            auto& f = out[fail[u]];
+            out[u].insert(f.begin(), f.end());
         }
 
         vector<bool> Matches(const string& s){
             vector<bool> found(n, false);
             auto u = int();
             for(const auto& c : s){
-                u = Next(u, c);
+                u = Failure(u, c);
                 for(auto& v : out[u]){
                     found[v] = true;
                 }
@@ -86,17 +72,29 @@ namespace Strings{
             return found;
         }
 
-        int Next(int u, char c){
-            auto next = u;
-            while(!trie[next].count(c)){
-                if(next == 0) break;
-                next = fail[next];
+        void InsertString(const string& s){
+            unsigned int u = int();
+            for(const auto& c : s){
+                auto f = trie[u].find(c);
+                if(f == trie[u].end()){
+                    u = trie[u][c] = ++m;
+                }else{
+                    u = f->second;
+                }
             }
-            auto x = trie[next].find(c);
-            if(x != trie[next].end()){
+            out[u].insert(n++);
+        }
+
+        int Failure(int u, char c){
+            while(!trie[u].count(c)){
+                if(u == 0) break;
+                u = fail[u];
+            }
+            auto x = trie[u].find(c);
+            if(x != trie[u].end()){
                 return x->second;
             }
-            return next;
+            return u;
         }
 
     };
