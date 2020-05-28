@@ -140,7 +140,6 @@ namespace Solution{
                 cout << st->Update(x, x, u);
                 cout << '\n';
             }
-            cout << '\n';
         }
     }
 
