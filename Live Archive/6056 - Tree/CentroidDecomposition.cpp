@@ -56,11 +56,11 @@ namespace Graphs
 
         int SubtreeSize(const Node &, const Node &) noexcept;
 
-        void LongestPaths(const Node &start) noexcept;
-
         void MaximizePaths(const Node &) noexcept;
 
         Node FindCentroid(const Node &) noexcept;
+
+        void LongestPaths(const Node &) noexcept;
 
         void RemoveNode(const Node &) noexcept;
 
