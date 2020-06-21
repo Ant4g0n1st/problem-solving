@@ -9,7 +9,7 @@
 namespace Types
 {
 
-    using Long = long long int;
+    using Int = unsigned int;
 
 };
 
@@ -28,7 +28,7 @@ namespace Graphs
     };
 
     template <typename W>
-    struct Tree
+    class Tree
     {
         using Node = unsigned int;
         using List = std::forward_list<Edge<Node, W>>;
@@ -74,19 +74,15 @@ namespace Solution
 
     void SolveProblem()
     {
-        std::unique_ptr<Graphs::Tree<Long>> t{};
-        int n{};
+        std::unique_ptr<Graphs::Tree<Int>> t{}; int n{};
         while (std::cin >> n)
         {
-            t.reset(new Graphs::Tree<Long>(n));
+            t.reset(new Graphs::Tree<Int>(n));
             for (int i = 1; i < n; i++)
             {
-                int u;
-                std::cin >> u, --u;
-                int v;
-                std::cin >> v, --v;
-                Long w;
-                std::cin >> w;
+                int u; std::cin >> u, --u;
+                int v; std::cin >> v, --v;
+                Int w; std::cin >> w;
                 t->AddEdge(u, v, w);
             }
             const auto &paths{t->LongestPaths()};
@@ -108,7 +104,7 @@ namespace Solution
 
 int main()
 {
-    //Solution::OptimizeIOStreams();
+    Solution::OptimizeIOStreams();
     Solution::SolveProblem();
     return 0;
 }
@@ -125,6 +121,41 @@ namespace Graphs
     Tree<W>::Tree(const int &nodes) : edges(nodes), n(nodes) {}
 
     template <typename W>
+    void Tree<W>::ComputeWeight(const Node &u, const Node &p, const Node &r) noexcept
+    {
+        /* Update the maximum stacked weight in the subtree. */
+        maxBranch[r] = std::max(maxBranch[r], path[u]);
+        for (const auto &e : edges[u])
+        {
+            const auto &v{e.v};
+            if (!cut[v] and v != p)
+            {
+                /* Compute the stacked weight relative to a centroid. */
+                path[v] = path[u] + e.w;
+                ComputeWeight(v, u, r);
+            }
+        }
+    }
+
+    template <typename W>
+    void Tree<W>::MaximizePath(const Node &u, const Node &p, const W &max) noexcept
+    {
+        /* 
+            Update the farthest path for this node given the 
+            maximum sibling branch in the level.
+        */
+        longest[u] = std::max(longest[u], path[u] + max);
+        for (const auto &e : edges[u])
+        {
+            const auto &v{e.v};
+            if (!cut[v] and v != p)
+            {
+                MaximizePath(v, u, max);
+            }
+        }
+    }
+
+    template <typename W>
     void Tree<W>::AddEdge(const Node &u, const Node &v, const W &w) noexcept
     {
         edges[u].emplace_front(v, w);
@@ -134,6 +165,10 @@ namespace Graphs
     template <typename W>
     typename Tree<W>::Node Tree<W>::FindCentroid(const Node &root) noexcept
     {
+        /*
+            Pre-computing the subtree size to find
+            the centroid efficiently.
+        */
         auto &&min{SubtreeSize(root, root)};
         std::queue<Node> q{};
         auto centroid{root};
@@ -153,6 +188,7 @@ namespace Graphs
                     q.emplace(v);
                 }
             }
+            /* The centroid must have the smallest residual component. */
             if (max < min)
             {
                 centroid = u;
@@ -165,6 +201,10 @@ namespace Graphs
     template <typename W>
     int Tree<W>::SubtreeSize(const Node &u, const Node &p) noexcept
     {
+        /*
+            A very well known approach to
+            compute the subtree size.
+        */
         auto &s{size[u] = 0};
         this->parent[u] = p;
         for (const auto &e : edges[u])
@@ -179,83 +219,12 @@ namespace Graphs
     }
 
     template <typename W>
-    typename Tree<W>::Node Tree<W>::GetRandomNode() noexcept
-    {
-        /* Returns a random number in the range [0, n - 1]*/
-        std::uniform_int_distribution<int> dist{};
-        std::default_random_engine generator{n};
-        return dist(generator) % n;
-    }
-
-    template <typename W>
-    std::vector<W> &Tree<W>::LongestPaths() noexcept
-    {
-        const auto &&start{GetRandomNode()};
-        maxBranch.resize(n), cut.resize(n);
-        longest.resize(n), path.resize(n);
-        parent.resize(n), size.resize(n);
-        this->LongestPaths(start);
-        return longest;
-    }
-
-    template <typename W>
-    void Tree<W>::LongestPaths(const Node &start) noexcept
-    {
-        const auto &&centroid{FindCentroid(start)};
-        RemoveNode(centroid);
-        if (!size[centroid])
-        {
-            return;
-        }
-        this->MaximizePaths(centroid);
-        for (const auto &e : edges[centroid])
-        {
-            const auto &v{e.v};
-            if (!cut[e.v])
-            {
-                LongestPaths(v);
-            }
-        }
-    }
-
-    template <typename W>
-    void Tree<W>::RemoveNode(const Node &u) noexcept
-    {
-        this->cut[u] = true;
-    }
-
-    template <typename W>
-    void Tree<W>::ComputeWeight(const Node &u, const Node &p, const Node &r) noexcept
-    {
-        maxBranch[r] = std::max(maxBranch[r], path[u]);
-        for (const auto &e : edges[u])
-        {
-            const auto &v{e.v};
-            if (!cut[v] and v != p)
-            {
-                path[v] = path[u] + e.w;
-                ComputeWeight(v, u, r);
-            }
-        }
-    }
-
-    template <typename W>
-    void Tree<W>::MaximizePath(const Node &u, const Node &p, const W &max) noexcept
-    {
-        longest[u] = std::max(longest[u], path[u] + max);
-        for (const auto &e : edges[u])
-        {
-            const auto &v{e.v};
-            if (!cut[v] and v != p)
-            {
-                MaximizePath(v, u, max);
-            }
-        }
-    }
-
-    template <typename W>
     void Tree<W>::MaximizePaths(const Node &centroid) noexcept
     {
+        /*
+            First, find the longest branches
+            of all adjacent subtrees.
+        */
         std::multiset<W> max{};
         for (const auto &e : edges[centroid])
         {
@@ -272,6 +241,11 @@ namespace Graphs
                 }
             }
         }
+        /*
+            Then, compute the longest paths for each node
+            by temporarily removing the subtree's 
+            longest branch.
+        */
         for (const auto &e : edges[centroid])
         {
             const auto &v{e.v};
@@ -287,6 +261,55 @@ namespace Graphs
                 max.emplace(maxBranch[v]);
             }
         }
+    }
+
+    template <typename W>
+    typename Tree<W>::Node Tree<W>::GetRandomNode() noexcept
+    {
+        /* Returns a random number in the range [0, n - 1]*/
+        std::uniform_int_distribution<int> dist{};
+        std::default_random_engine generator{n};
+        return dist(generator) % n;
+    }
+
+    template <typename W>
+    void Tree<W>::LongestPaths(const Node &start) noexcept
+    {
+        /* Find the centroid. */
+        const auto &&centroid{FindCentroid(start)};
+        RemoveNode(centroid);
+        if (!size[centroid])
+        {
+            return;
+        }
+        /* Attempt to maximize. */
+        this->MaximizePaths(centroid);
+        /* Compute the next decomposition level. */
+        for (const auto &e : edges[centroid])
+        {
+            const auto &v{e.v};
+            if (!cut[e.v])
+            {
+                LongestPaths(v);
+            }
+        }
+    }
+
+    template <typename W>
+    std::vector<W> &Tree<W>::LongestPaths() noexcept
+    {
+        const auto &&start{GetRandomNode()};
+        maxBranch.resize(n), cut.resize(n);
+        longest.resize(n), path.resize(n);
+        parent.resize(n), size.resize(n);
+        this->LongestPaths(start);
+        return longest;
+    }
+
+    template <typename W>
+    void Tree<W>::RemoveNode(const Node &u) noexcept
+    {
+        this->cut[u] = true;
     }
 
 }; // namespace Graphs
