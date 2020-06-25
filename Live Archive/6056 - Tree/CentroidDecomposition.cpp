@@ -222,10 +222,10 @@ namespace Graphs
     void Tree<W>::MaximizePaths(const Node &centroid) noexcept
     {
         /*
-            First, find the longest branches
-            of all adjacent subtrees.
+            First, find the longest and second longest
+            branches of all adjacent subtrees.
         */
-        std::multiset<W> max{};
+        W max{0}, secondMax{0};
         for (const auto &e : edges[centroid])
         {
             const auto &v{e.v};
@@ -234,31 +234,32 @@ namespace Graphs
                 maxBranch[v] = 0;
                 path[v] = e.w;
                 ComputeWeight(v, centroid, v);
-                max.emplace(maxBranch[v]);
-                if (longest[centroid] < maxBranch[v])
+                if (max <= maxBranch[v])
                 {
-                    longest[centroid] = maxBranch[v];
+                    std::swap(max, secondMax);
+                    max = maxBranch[v];
+                }
+                else if (secondMax < maxBranch[v])
+                {
+                    secondMax = maxBranch[v];
                 }
             }
         }
+        if (longest[centroid] < max)
+        {
+            longest[centroid] = max;
+        }
         /*
             Then, compute the longest paths for each node
-            by temporarily removing the subtree's 
-            longest branch.
+            with the longest sibling branch.
         */
         for (const auto &e : edges[centroid])
         {
             const auto &v{e.v};
             if (!cut[v])
             {
-                auto it{max.find(maxBranch[v])};
-                max.erase(it); W m{};
-                if (max.rbegin() != max.rend())
-                {
-                    m = *max.rbegin();
-                }
-                MaximizePath(v, centroid, m);
-                max.emplace(maxBranch[v]);
+                auto m{maxBranch[v] == max ? secondMax : max};
+                this->MaximizePath(v, centroid, m);
             }
         }
     }
@@ -266,7 +267,7 @@ namespace Graphs
     template <typename W>
     typename Tree<W>::Node Tree<W>::GetRandomNode() noexcept
     {
-        /* Returns a random number in the range [0, n - 1]*/
+        /* Returns a random number in the range [0, n - 1] */
         std::uniform_int_distribution<int> dist{};
         std::default_random_engine generator{n};
         return dist(generator) % n;
@@ -278,10 +279,6 @@ namespace Graphs
         /* Find the centroid. */
         const auto &&centroid{FindCentroid(start)};
         RemoveNode(centroid);
-        if (!size[centroid])
-        {
-            return;
-        }
         /* Attempt to maximize. */
         this->MaximizePaths(centroid);
         /* Compute the next decomposition level. */
