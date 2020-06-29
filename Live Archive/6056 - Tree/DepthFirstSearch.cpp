@@ -112,8 +112,7 @@ namespace Graphs
     void Tree<W>::MaximizePath(const Node &u, const Node &p, const W &max) noexcept
     {
         /* Maximize between the paths above and below the node. */
-        auto &maxPath{longest[u] = maxChildren[u].first};
-        maxPath = std::max(maxPath, max);
+        longest[u] = std::max(maxChildren[u].first, max);
         for (const auto &e : edges[u])
         {
             const auto &v{e.v};
@@ -175,9 +174,9 @@ namespace Graphs
     typename Tree<W>::Node Tree<W>::GetRandomNode() noexcept
     {
         /* Returns a random number in the range [0, n - 1] */
-        std::uniform_int_distribution<int> dist{};
+        std::uniform_int_distribution<Node> dist{};
         std::default_random_engine generator{n};
-        return dist(generator) % n;
+        return dist(generator) % static_cast<Node>(n);
     }
 
     template <typename W>
