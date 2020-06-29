@@ -1,7 +1,6 @@
 #include <type_traits>
 #include <exception>
 #include <iostream>
-#include <string>
 #include <vector>
 
 namespace Types
@@ -23,7 +22,7 @@ namespace Constants
 namespace Math
 {
 
-    template <typename T = Int, T Base = static_cast<T>(Constants::BASE10)>
+    template <typename T, T Base = static_cast<T>(Constants::BASE10)>
     class BigInteger
     {
         static_assert(std::is_integral<T>::value);
@@ -33,13 +32,13 @@ namespace Math
     public:
         BigInteger(T = T{}) noexcept;
 
-        BigInteger &operator*=(const T &) noexcept;
+        const std::vector<T> &GetDigits() const noexcept;
 
-        const std::string ToString() noexcept;
+        BigInteger &operator*=(const T &) noexcept;
     };
 
-    template <typename T>
-    const std::string MultiplySequence(const std::vector<T> &) noexcept;
+    template <typename T, T Base>
+    std::ostream &operator<<(std::ostream &output, const BigInteger<T, Base> &integer);
 
 }; // namespace Math
 
@@ -62,7 +61,12 @@ namespace Solution
     void SolveProblem()
     {
         std::vector<Int> meow(223, 224);
-        std::cout << Math::MultiplySequence(meow) << std::endl;
+        Math::BigInteger<Int> product{1};
+        for (const auto &v : meow)
+        {
+            product *= v;
+        }
+        std::cout << product << std::endl;
     }
 
 }; // namespace Solution
@@ -86,6 +90,19 @@ namespace Exceptions
 
 namespace Math
 {
+
+    /* Output stream overload for BigInteger. */
+    template <typename T, T Base>
+    std::ostream &operator<<(std::ostream &output, const BigInteger<T, Base> &integer)
+    {
+        auto iterator{integer.GetDigits().rbegin()};
+        auto end{integer.GetDigits().rend()};
+        for (; iterator != end; iterator++)
+        {
+            output << static_cast<char>(*iterator + '0');
+        }
+        return output;
+    }
 
     /* BigInteger Implementation. */
     template <typename T, T Base>
@@ -115,27 +132,9 @@ namespace Math
     }
 
     template <typename T, T Base>
-    const std::string BigInteger<T, Base>::ToString() noexcept
+    const std::vector<T> &BigInteger<T, Base>::GetDigits() const noexcept
     {
-        std::string output{};
-        for (auto it{digits.rbegin()}; it != digits.rend(); it++)
-        {
-            output.push_back('0' + static_cast<char>(*it));
-        }
-        return output;
-    }
-
-    /* MultiplySequence Implementation. */
-    template <typename T>
-    const std::string MultiplySequence(const std::vector<T> &sequence) noexcept
-    {
-        static_assert(std::is_integral<T>::value);
-        BigInteger<T> result{1};
-        for (const auto &element : sequence)
-        {
-            result *= element;
-        }
-        return result.ToString();
+        return digits;
     }
 
 }; // namespace Math
