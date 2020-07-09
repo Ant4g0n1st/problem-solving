@@ -1,11 +1,8 @@
 #include <forward_list>
 #include <type_traits>
-#include <algorithm>
 #include <iostream>
-#include <numeric>
 #include <limits>
 #include <memory>
-#include <random>
 #include <string>
 #include <vector>
 #include <queue>
@@ -14,7 +11,6 @@
 namespace Types
 {
 
-    using Long = long long int;
     using Int = unsigned int;
 
 }; // namespace Types
@@ -83,7 +79,7 @@ namespace Graphs
 
         void AddEdge(const Node &, const Node &, const T &) noexcept;
 
-        T MinimumDistanceST(const Node &);
+        T MinimumDistanceST(const Node &) const;
     };
 
 }; // namespace Graphs
@@ -93,10 +89,9 @@ namespace Solution
 
     void SolveProblem()
     {
-        int m{}, n{};
-        while (std::cin >> n >> m)
+        for (int m{}, n{}; std::cin >> n >> m;)
         {
-            std::unique_ptr<Graphs::Graph<Long>> g{};
+            std::unique_ptr<Graphs::Graph<Int>> g{};
             DataStructures::Trie<char, Int> trie{};
             for (int i = 0; i < n; i++)
             {
@@ -105,7 +100,7 @@ namespace Solution
                 trie[language] = i;
             }
             const auto &s{trie["English"] = n++};
-            g.reset(new Graphs::Graph<Long>(n));
+            g.reset(new Graphs::Graph<Int>(n));
             for (int i = 0; i < m; i++)
             {
                 std::string language{};
@@ -113,8 +108,7 @@ namespace Solution
                 const auto &u{trie[language]};
                 std::cin >> language;
                 const auto &v{trie[language]};
-                Long w{};
-                std::cin >> w;
+                Int w{}; std::cin >> w;
                 g->AddEdge(u, v, w);
             }
             try
@@ -158,6 +152,11 @@ namespace DataStructures
     template <typename AlphabetType, typename OutputType>
     OutputType &Trie<AlphabetType, OutputType>::operator[](const std::basic_string<AlphabetType> &key) noexcept
     {
+        /*
+            Due to the input format, this implementation can be minimalistic.
+            Overriding the subscript operator because it looks cool
+            and works like std::map.
+        */
         Trie *currentNode{this};
         for (int i = 0; i < key.size(); i++)
         {
@@ -171,6 +170,7 @@ namespace DataStructures
 namespace Exceptions
 {
 
+    /* NotConnected Implementation. */
     const char *NotConnected::what() const throw()
     {
         return "The graph is not connected.";
@@ -197,8 +197,14 @@ namespace Graphs
     }
 
     template <typename T>
-    T Graph<T>::MinimumDistanceST(const Node &source)
+    T Graph<T>::MinimumDistanceST(const Node &source) const
     {
+        /* 
+            Breadth First Search guarantees the shortest distance from the source,
+            the way to minimize the total cost of the spanning subtree is by
+            minimizing the incoming edge of a node from all it's possible
+            parents, i.e. adjacent nodes from the previous search level.
+        */
         std::vector<Int> depth(n, oo);
         std::vector<T> weight(n);
         std::queue<Node> q{};
@@ -214,10 +220,12 @@ namespace Graphs
                 const auto &w{e.w};
                 if (depth[u] + 1 == depth[v])
                 {
-                    if (weight[u] < weight[v])
-                    {
-                        weight[v] = weight[u];
-                    }
+                    /*
+                        If this node would be my child,
+                        would that improve the cost?
+                    */
+                    auto &m{weight[v]};
+                    m = std::min(m, w);
                 }
                 if (depth[u] + 1 < depth[v])
                 {
@@ -232,18 +240,14 @@ namespace Graphs
         {
             if (depth[u] == oo)
             {
+                /*
+                    A value of infinity means the node
+                    was never reached.
+                */
                 throw Exceptions::NotConnected{};
             }
             totalCost += weight[u];
         }
-        // std::cout << "WEIGHT : ";
-        // for (const auto &x : weight)
-        //     std::cout << x << ' ';
-        // std::cout << std::endl;
-        // std::cout << "DEPTH : ";
-        // for (const auto &x : depth)
-        //     std::cout << x << ' ';
-        // std::cout << std::endl;
         return totalCost;
     }
 
