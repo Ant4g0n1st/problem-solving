@@ -185,7 +185,7 @@ namespace Graphs
     template <typename NodeType, typename WeightType>
     Edge<NodeType, WeightType>::Edge(const NodeType &u, const WeightType &weight) : v(u), w(weight) {}
 
-    /* Graph Implementaion. */
+    /* Graph Implementation. */
     template <typename T>
     Graph<T>::Graph(const int &nodes) : n(nodes), edges(nodes) {}
 
