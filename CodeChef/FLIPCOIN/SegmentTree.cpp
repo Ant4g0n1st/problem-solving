@@ -26,8 +26,6 @@ namespace DataStructures
 
         T Query(const Int &, const Int &) noexcept;
 
-        void Invert() noexcept;
-
         void Build() noexcept;
 
     private:
@@ -38,6 +36,8 @@ namespace DataStructures
         T IntervalWidth() noexcept;
 
         void Propagate() noexcept;
+
+        void Invert() noexcept;
 
         bool IsLeaf() noexcept;
 
@@ -76,13 +76,13 @@ namespace Solution
             int r{}; std::cin >> r;
             switch (static_cast<QueryType>(t))
             {
-            case QueryType::FlipCoins:
-                st->Update(l, r);
-                break;
-
             case QueryType::CountHeads:
                 std::cout << st->Query(l, r);
                 std::cout << '\n';
+                break;
+
+            case QueryType::FlipCoins:
+                st->Update(l, r);
                 break;
 
             default:
@@ -99,8 +99,6 @@ namespace Solution
     }
 
 } // namespace Solution
-
-#include <fstream>
 
 int main()
 {
