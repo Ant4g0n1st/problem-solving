@@ -40,7 +40,7 @@ namespace Util
         Factory() = default;
 
         template <typename... Args>
-        T *operator()(Args... args) noexcept;
+        T *operator()(Args...) noexcept;
 
         void Reset() noexcept;
 
@@ -62,10 +62,10 @@ namespace DataStructures
 
         SegmentTree() = default;
 
+        T Query(const Int &, const Int &) const noexcept;
+
         template <typename Factory, typename Iterator>
         const T &Build(Factory &, Iterator) noexcept;
-
-        T Query(const Int &, const Int &) const noexcept;
 
     private:
         bool Contained(const Int &, const Int &) const noexcept;
