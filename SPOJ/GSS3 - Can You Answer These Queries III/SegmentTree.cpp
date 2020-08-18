@@ -221,20 +221,6 @@ namespace DataStructures
     }
 
     template <typename T>
-    T SegmentTree<T>::Update(const Int &i, const T &v) noexcept
-    {
-        if (Disjoint(i, i))
-        {
-            return value;
-        }
-        if (Contained(i, i))
-        {
-            return value = v;
-        }
-        return value = left->Update(i, v) + right->Update(i, v);
-    }
-
-    template <typename T>
     T SegmentTree<T>::Query(const Int &l, const Int &r) const noexcept
     {
         if (Disjoint(l, r))
@@ -277,6 +263,20 @@ namespace DataStructures
             this->value = *it;
         }
         return value;
+    }
+
+    template <typename T>
+    T SegmentTree<T>::Update(const Int &i, const T &v) noexcept
+    {
+        if (Disjoint(i, i))
+        {
+            return value;
+        }
+        if (Contained(i, i))
+        {
+            return value = v;
+        }
+        return value = left->Update(i, v) + right->Update(i, v);
     }
 
     template <typename T>
