@@ -23,6 +23,10 @@ namespace Constants
 namespace Util
 {
 
+    /*
+        This is my attempt to simulate
+        dynamic memory allocation.
+    */
     template <typename T, Int Size>
     class Factory
     {
@@ -89,6 +93,7 @@ namespace DataStructures
         bool IsLeaf() const noexcept;
 
     private:
+        bool hasPendingSet{};
         SegmentTree *right{};
         SegmentTree *left{};
         T sumOfSquares{};
@@ -121,13 +126,11 @@ namespace Solution
 
     void SolveProblem(std::istream &input, std::ostream &output)
     {
-        Int testCases{};
-        input >> testCases;
+        Int testCases{}; input >> testCases;
         for (Int t = 1; t <= testCases; t++)
         {
             output << "Case " << t << ":\n";
-            Int m{}, n{};
-            input >> n >> m;
+            Int m{}, n{}; input >> n >> m;
             for (Int i = 0; i < n; i++)
             {
                 input >> sequence[i];
@@ -136,25 +139,20 @@ namespace Solution
             st->Build(factory, sequence.begin());
             for (Int i = 0; i < m; i++)
             {
-                Int type{};
-                input >> type;
-                Int l{};
-                input >> l, --l;
-                Int r{};
-                input >> r, --r;
+                Int type{}; input >> type;
+                Int l{}; input >> l, --l;
+                Int r{}; input >> r, --r;
                 switch (static_cast<OperationType>(type))
                 {
                 case OperationType::AddValueToRange:
                 {
-                    Integral v{};
-                    input >> v;
+                    Integral v{}; input >> v;
                     st->AddToRange(l, r, v);
                 }
                 break;
                 case OperationType::SetRangeToValue:
                 {
-                    Integral v{};
-                    input >> v;
+                    Integral v{}; input >> v;
                     st->SetRangeTo(l, r, v);
                 }
                 break;
@@ -194,6 +192,7 @@ namespace Util
     template <typename... Args>
     T *Factory<T, Size>::operator()(Args &&... args) noexcept
     {
+        /* Constructing the element in-place without allocating memory. */
         return new (&elements[pointer++]) T{std::forward<Args>(args)...};
     }
 
@@ -236,15 +235,32 @@ namespace DataStructures
         switch (pendingType)
         {
         case UpdateType::AddValue:
+        {
             pendingAdd += pending;
-            break;
+        }
+        break;
         case UpdateType::SetValue:
         {
+            hasPendingSet = true;
             pendingSet = pending;
             pendingAdd = T{};
         }
         break;
+        default:
+            break;
         }
+    }
+
+    template <typename T>
+    void SegmentTree<T>::AddToRange(const Int &l, const Int &r, const T &v) noexcept
+    {
+        Update(l, r, UpdateType::AddValue, v);
+    }
+
+    template <typename T>
+    void SegmentTree<T>::SetRangeTo(const Int &l, const Int &r, const T &v) noexcept
+    {
+        Update(l, r, UpdateType::SetValue, v);
     }
 
     template <typename T>
@@ -282,15 +298,38 @@ namespace DataStructures
     }
 
     template <typename T>
-    void AddToRange(const Int &l, const Int &r, const T &v) noexcept
+    const T &SegmentTree<T>::ApplyPending() noexcept
     {
-        Update(l, r, UpdateType::AddValue, v);
-    }
-
-    template <typename T>
-    void SetRangeTo(const Int &l, const Int &r, const T &v) noexcept
-    {
-        Update(l, r, UpdateType::SetValue, v);
+        if (!this->IsLeaf())
+        {
+            if (hasPendingSet)
+            {
+                right->SetPending(UpdateType::SetValue, pendingSet);
+                left->SetPending(UpdateType::SetValue, pendingSet);
+            }
+            right->SetPending(UpdateType::AddValue, pendingAdd);
+            left->SetPending(UpdateType::AddValue, pendingAdd);
+        }
+        if (hasPendingSet)
+        {
+            /* Must be performed before addition. */
+            const auto &&w{IntervalWidth()};
+            const auto &v{pendingSet};
+            sumOfSquares = v * v * w;
+            totalSum = v * w;
+        }
+        if (pendingAdd)
+        {
+            const auto &&w{IntervalWidth()};
+            const auto &v{pendingAdd};
+            /* (a + b)^2 = a^2 + 2ab + b^2 */
+            sumOfSquares += totalSum * v * 2;
+            sumOfSquares += v * v * w;
+            totalSum += v * w;
+        }
+        pendingAdd = pendingSet = T{};
+        this->hasPendingSet = false;
+        return sumOfSquares;
     }
 
     template <typename T>
@@ -306,39 +345,6 @@ namespace DataStructures
             return sumOfSquares;
         }
         return left->Query(l, r) + right->Query(l, r);
-    }
-
-    template <typename T>
-    const T &SegmentTree<T>::ApplyPending() noexcept
-    {
-        switch (pendingType)
-        {
-        case UpdateType::AddValue:
-        {
-            const auto &&w{this->IntervalWidth()};
-            /* (a + b)^2 = a^2 + 2ab + b^2 */
-            sumOfSquares += totalSum * pending * 2;
-            sumOfSquares += pending * pending * w;
-            totalSum += pending * w;
-        }
-        break;
-        case UpdateType::SetValue:
-        {
-            const auto &&w{this->IntervalWidth()};
-            sumOfSquares = pending * pending * w;
-            totalSum = pending * w;
-        }
-        break;
-        case UpdateType::NoType:
-            return sumOfSquares;
-        }
-        if (!this->IsLeaf())
-        {
-            right->SetPending(pendingType, pending);
-            left->SetPending(pendingType, pending);
-        }
-        pendingType = UpdateType::NoType;
-        return this->sumOfSquares;
     }
 
     template <typename T>
