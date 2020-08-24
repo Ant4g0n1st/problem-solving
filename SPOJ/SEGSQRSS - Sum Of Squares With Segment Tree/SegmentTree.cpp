@@ -64,7 +64,9 @@ namespace DataStructures
 
         SegmentTree() = default;
 
-        const T &Update(const Int &, const Int &, const UpdateType &, const T &) noexcept;
+        void AddToRange(const Int &, const Int &, const T &) noexcept;
+
+        void SetRangeTo(const Int &, const Int &, const T &) noexcept;
 
         template <typename Factory, typename Iterator>
         const T &Build(Factory &, Iterator) noexcept;
@@ -72,6 +74,8 @@ namespace DataStructures
         T Query(const Int &, const Int &) noexcept;
 
     private:
+        const T &Update(const Int &, const Int &, const UpdateType &, const T &) noexcept;
+
         void SetPending(const UpdateType &, const T &) noexcept;
 
         bool Contained(const Int &, const Int &) const noexcept;
@@ -85,12 +89,12 @@ namespace DataStructures
         bool IsLeaf() const noexcept;
 
     private:
-        UpdateType pendingType{};
         SegmentTree *right{};
         SegmentTree *left{};
         T sumOfSquares{};
+        T pendingAdd{};
+        T pendingSet{};
         T totalSum{};
-        T pending{};
         Int l{};
         Int r{};
     };
@@ -117,11 +121,13 @@ namespace Solution
 
     void SolveProblem(std::istream &input, std::ostream &output)
     {
-        Int testCases{}; input >> testCases;
+        Int testCases{};
+        input >> testCases;
         for (Int t = 1; t <= testCases; t++)
         {
             output << "Case " << t << ":\n";
-            Int m{}, n{}; input >> n >> m;
+            Int m{}, n{};
+            input >> n >> m;
             for (Int i = 0; i < n; i++)
             {
                 input >> sequence[i];
@@ -130,26 +136,32 @@ namespace Solution
             st->Build(factory, sequence.begin());
             for (Int i = 0; i < m; i++)
             {
-                Int type{}; input >> type;
-                Int l{}; input >> l, --l;
-                Int r{}; input >> r, --r;
+                Int type{};
+                input >> type;
+                Int l{};
+                input >> l, --l;
+                Int r{};
+                input >> r, --r;
                 switch (static_cast<OperationType>(type))
                 {
                 case OperationType::AddValueToRange:
                 {
-                    Integral v{}; input >> v;
-                    st->Update(l, r, SegTree<Integral>::UpdateType::AddValue, v);
+                    Integral v{};
+                    input >> v;
+                    st->AddToRange(l, r, v);
                 }
                 break;
                 case OperationType::SetRangeToValue:
                 {
-                    Integral v{}; input >> v;
-                    st->Update(l, r, SegTree<Integral>::UpdateType::SetValue, v);
+                    Integral v{};
+                    input >> v;
+                    st->SetRangeTo(l, r, v);
                 }
                 break;
                 case OperationType::QuerySum:
                 {
-                    output << st->Query(l, r) << '\n';
+                    output << st->Query(l, r);
+                    output << '\n';
                 }
                 break;
                 }
@@ -221,10 +233,17 @@ namespace DataStructures
     template <typename T>
     void SegmentTree<T>::SetPending(const UpdateType &pendingType, const T &pending) noexcept
     {
-        if (pendingType != UpdateType::NoType)
+        switch (pendingType)
         {
-            this->pendingType = pendingType;
-            this->pending = pending;
+        case UpdateType::AddValue:
+            pendingAdd += pending;
+            break;
+        case UpdateType::SetValue:
+        {
+            pendingSet = pending;
+            pendingAdd = T{};
+        }
+        break;
         }
     }
 
@@ -260,6 +279,18 @@ namespace DataStructures
             totalSum = v;
         }
         return sumOfSquares;
+    }
+
+    template <typename T>
+    void AddToRange(const Int &l, const Int &r, const T &v) noexcept
+    {
+        Update(l, r, UpdateType::AddValue, v);
+    }
+
+    template <typename T>
+    void SetRangeTo(const Int &l, const Int &r, const T &v) noexcept
+    {
+        Update(l, r, UpdateType::SetValue, v);
     }
 
     template <typename T>
