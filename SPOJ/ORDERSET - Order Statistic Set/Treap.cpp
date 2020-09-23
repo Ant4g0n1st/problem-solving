@@ -1,4 +1,5 @@
 #include <type_traits>
+#include <functional>
 #include <iostream>
 #include <chrono>
 #include <memory>
