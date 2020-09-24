@@ -14,6 +14,7 @@ namespace Types
 }; // namespace Types
 
 using namespace Types;
+
 namespace Random
 {
 
