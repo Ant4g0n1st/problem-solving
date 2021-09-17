@@ -125,7 +125,7 @@ namespace DataStructures
 
 }
 
-namespace Solution
+namespace Math
 {
 
     template <typename IntegralType>
@@ -153,38 +153,99 @@ namespace Solution
         IntegralType v{};
     };
 
+    template <typename NumericType>
+    class Rectangle
+    {
+        static_assert(std::is_arithmetic<NumericType>());
+
+    public:
+        Rectangle() = default;
+
+        std::pair<NumericType, NumericType> south_west_corner{};
+        std::pair<NumericType, NumericType> north_east_corner{};
+    };
+
+}
+
+namespace Solution
+{
+
+    template <typename NumericType>
+    class RoomEvent
+    {
+        static_assert(std::is_arithmetic<NumericType>());
+
+    public:
+        RoomEvent(const NumericType &time, const int &room_index, const bool &is_begin) : time(time), room_index(room_index), is_begin(is_begin) {}
+
+        const NumericType &GetTime() const
+        {
+            return time;
+        }
+
+        const int &GetRoomIndex() const
+        {
+            return room_index;
+        }
+
+        const bool &IsBegin() const
+        {
+            return is_begin;
+        }
+
+    private:
+        NumericType time{};
+        int room_index{};
+        bool is_begin{};
+    };
+
+    using CoordinateType = int;
+
     static void SolveProblem(std::istream &input, std::ostream &output)
     {
-        const unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-        const int n = 1e5;
-        const int q = 1e4;
-        std::uniform_int_distribution<int> distribution{0, n - 1};
-        std::default_random_engine generator{seed};
-        auto random{std::bind(distribution, generator)};
-        std::unique_ptr<DataStructures::SegmentTree<MaxInteger<int>>> tree{};
-        tree.reset(new DataStructures::SegmentTree<MaxInteger<int>>{0, n - 1});
-        std::vector<int> array(n, std::numeric_limits<int>::min());
-        tree->Build();
-        for (int i = 0; i < q; i++)
+        std::map<CoordinateType, int> ordinate_map{};
+        int room_count{};
+        input >> room_count;
+        std::vector<Math::Rectangle<CoordinateType>> rooms(room_count);
+        for (int i = 0; i < room_count; i++)
         {
-            auto l{random()}, r{random()}, v{random()};
-            if (l > r)
+            auto &sw{rooms[i].south_west_corner};
+            auto &ne{rooms[i].north_east_corner};
+            input >> sw.first >> sw.second;
+            input >> ne.first >> sw.second;
+            ordinate_map[sw.second] = i;
+            ordinate_map[ne.second] = i;
+        }
+        int unique_ordinate_count{};
+        for (auto &ordinate_index : ordinate_map)
+        {
+            ordinate_index.second = unique_ordinate_count++;
+        }
+        std::vector<RoomEvent<CoordinateType>> room_events{};
+        for (int room_index = 0; room_index < room_count; room_index++)
+        {
+            auto &room{rooms[room_index]};
+            room.north_east_corner.second = ordinate_map[room.north_east_corner.second];
+            room.south_west_corner.second = ordinate_map[room.south_west_corner.second];
+            room_events.emplace_back(room.north_east_corner.first, room_index, false);
+            room_events.emplace_back(room.south_west_corner.first, room_index, true);
+        }
+        std::sort(room_events.begin(), room_events.end(),
+                  [](const RoomEvent<CoordinateType> &a, const RoomEvent<CoordinateType> &b)
+                  {
+                      return a.GetTime() < b.GetTime();
+                  });
+        std::unique_ptr<DataStructures::SegmentTree<Math::MaxInteger<int>>> indices{};
+        std::vector<Math::MaxInteger<int>> room_overwritten(room_count);
+        const int room_event_count = room_events.size();
+        for (int i = 0; i < room_event_count; i++)
+        {
+            const auto &event{room_events[i]};
+            const auto &room_index{event.GetRoomIndex()};
+            const auto &room{rooms[room_index]};
+            if (event.IsBegin())
             {
-                std::swap(l, r);
-            }
-            for (int j = l; j <= r; j++)
-            {
-                array[j] = v;
-            }
-            tree->Update(l, r, v);
-            for (int j = 0; j < 100; j++)
-            {
-                const auto x{random()};
-                const int y{tree->Query(x)};
-                if (y != array[x])
-                {
-                    output << "DIFFERENT : T[" << y << "] A[" << array[x] << "]" << '\n';
-                }
+                room_overwritten[room_index] = indices->Query(room.north_east_corner.second);
             }
         }
     }
