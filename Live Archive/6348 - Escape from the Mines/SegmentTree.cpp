@@ -22,6 +22,10 @@ namespace IO
 namespace DataStructures
 {
 
+    // Segment Tree for Range Update, Point Query.
+    // Operations:
+    //  - Set an entire range to a given value.
+    //  - Query the value in a given position.
     template <typename ValueType>
     class SegmentTree
     {
@@ -66,7 +70,6 @@ namespace DataStructures
                 SetPendingTask(v);
                 return value;
             }
-            PropagatePendingTask();
             return value = left->Update(l, r, v) + right->Update(l, r, v);
         }
 
@@ -128,16 +131,17 @@ namespace DataStructures
 namespace Math
 {
 
-    template <typename IntegralType>
+    // A class that wraps an integer and overloads the addition operator to compute the maximum of two values.
+    template <typename IntegralType, IntegralType MinValue = std::numeric_limits<IntegralType>::min()>
     class MaxInteger
     {
         static_assert(std::is_integral<IntegralType>());
         static_assert(std::is_signed<IntegralType>());
 
     public:
-        MaxInteger() : v(std::numeric_limits<IntegralType>::min()) {}
-
         MaxInteger(const IntegralType &v) : v(v) {}
+
+        MaxInteger() = default;
 
         MaxInteger operator+(const MaxInteger &other) const
         {
@@ -150,7 +154,7 @@ namespace Math
         }
 
     private:
-        IntegralType v{};
+        IntegralType v{MinValue};
     };
 
     template <typename NumericType>
@@ -199,54 +203,84 @@ namespace Solution
         bool is_begin{};
     };
 
-    using CoordinateType = int;
-
     static void SolveProblem(std::istream &input, std::ostream &output)
     {
+        // First, we read the room descriptions and add the ordinates to the map for compression.
+        using CoordinateType = int;
         std::map<CoordinateType, int> ordinate_map{};
-        int room_count{};
-        input >> room_count;
+        int room_count{}; input >> room_count;
         std::vector<Math::Rectangle<CoordinateType>> rooms(room_count);
         for (int i = 0; i < room_count; i++)
         {
             auto &sw{rooms[i].south_west_corner};
             auto &ne{rooms[i].north_east_corner};
             input >> sw.first >> sw.second;
-            input >> ne.first >> sw.second;
+            input >> ne.first >> ne.second;
             ordinate_map[sw.second] = i;
             ordinate_map[ne.second] = i;
         }
+        // Then we compress the ordinates.
         int unique_ordinate_count{};
         for (auto &ordinate_index : ordinate_map)
         {
             ordinate_index.second = unique_ordinate_count++;
         }
+        // Next, split each room into a pair of events, one when the room first appears
+        // and one when the room ends, in the x-axis.
         std::vector<RoomEvent<CoordinateType>> room_events{};
         for (int room_index = 0; room_index < room_count; room_index++)
         {
             auto &room{rooms[room_index]};
-            room.north_east_corner.second = ordinate_map[room.north_east_corner.second];
-            room.south_west_corner.second = ordinate_map[room.south_west_corner.second];
-            room_events.emplace_back(room.north_east_corner.first, room_index, false);
-            room_events.emplace_back(room.south_west_corner.first, room_index, true);
+            auto &ne{room.north_east_corner};
+            auto &sw{room.south_west_corner};
+            // Compress the ordinates in each room for later.
+            ne.second = ordinate_map[ne.second];
+            sw.second = ordinate_map[sw.second];
+            room_events.emplace_back(ne.first, room_index, false);
+            room_events.emplace_back(sw.first, room_index, true);
         }
         std::sort(room_events.begin(), room_events.end(),
                   [](const RoomEvent<CoordinateType> &a, const RoomEvent<CoordinateType> &b)
                   {
                       return a.GetTime() < b.GetTime();
                   });
-        std::unique_ptr<DataStructures::SegmentTree<Math::MaxInteger<int>>> indices{};
-        std::vector<Math::MaxInteger<int>> room_overwritten(room_count);
-        const int room_event_count = room_events.size();
-        for (int i = 0; i < room_event_count; i++)
+        using MaxInt = Math::MaxInteger<int, -1>;
+        // We use a Segment Tree to detect which room contains another.
+        std::unique_ptr<DataStructures::SegmentTree<MaxInt>> indices{};
+        std::vector<MaxInt> room_overwritten(room_count);
+        std::vector<MaxInt> exits_into(room_count);
+        indices.reset(new DataStructures::SegmentTree<MaxInt>{0, unique_ordinate_count});
+        indices->Build();
+        // Process every room event in order.
+        for (const auto &event : room_events)
         {
-            const auto &event{room_events[i]};
             const auto &room_index{event.GetRoomIndex()};
             const auto &room{rooms[room_index]};
+            const auto &ne{room.north_east_corner};
+            const auto &sw{room.south_west_corner};
             if (event.IsBegin())
             {
-                room_overwritten[room_index] = indices->Query(room.north_east_corner.second);
+                // Check if we will obscure any room that is already open.
+                room_overwritten[room_index] = indices->Query(ne.second);
+                if (room_overwritten[room_index] >= 0)
+                {
+                    // If so, there's a room that started before, is still open and covers the height of this one,
+                    // as a consequence, because there's no room overlapping, that room contains this one.
+                    exits_into[room_index] = room_overwritten[room_index];
+                }
+                // We flag the area for any rooms contained inside this one.
+                indices->Update(sw.second, ne.second, room_index);
             }
+            else
+            {
+                // We clear our flag and restore the previous one as we exit this room.
+                indices->Update(sw.second, ne.second, room_overwritten[room_index]);
+            }
+        }
+        // Print the results.
+        for (int i = 0; i < room_count; i++)
+        {
+            output << exits_into[i] << '\n';
         }
     }
 
@@ -254,7 +288,7 @@ namespace Solution
 
 int main()
 {
-    //IO::OptimizeStandardIO();
+    IO::OptimizeStandardIO();
     Solution::SolveProblem(std::cin, std::cout);
     return 0;
 }
